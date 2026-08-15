@@ -10,8 +10,10 @@ import {
 import { celo } from 'viem/chains'
 
 async function main() {
-  const hsmKeyVersion =
-    'projects/valora-viem-hsm-test/locations/global/keyRings/test/cryptoKeys/hsm/cryptoKeyVersions/1'
+  const hsmKeyVersion = process.env.GCP_HSM_KEY_VERSION
+  if (!hsmKeyVersion) {
+    throw new Error('GCP_HSM_KEY_VERSION must be set')
+  }
 
   const viemHsmAccount = await gcpHsmToAccount({ hsmKeyVersion })
   const { address } = viemHsmAccount

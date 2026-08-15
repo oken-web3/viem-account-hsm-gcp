@@ -7,6 +7,7 @@ on:
       - main
   # ..and any pull request.
   pull_request:
+  workflow_dispatch:
 
 # Cancel any in progress run of the workflow for a given PR
 # This avoids building outdated code
@@ -50,12 +51,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      # Auth so e2e tests can access Google services
-      - id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          # From valora-viem-hsm-test
-          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version-file: 'package.json'
@@ -66,13 +61,27 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: coverage/lcov-report
-      - name: 'Upload coverage to Codecov'
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+  e2e:
+    name: End-to-end test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: 'package.json'
+          check-latest: true
+      - run: yarn
+      - run: yarn test:e2e
+        env:
+          GCP_HSM_KEY_VERSION: ${{ vars.GCP_HSM_KEY_VERSION }}
   publish:
     name: Publish to NPM
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.NPM_PUBLISH_ENABLED == 'true'
     needs:
       - check-for-sh
       - lint
@@ -86,19 +95,7 @@ jobs:
       id-token: write # to enable use of OIDC for npm trusted publishing and provenance
     environment: npm-publish # extra protection for publishing to npm
     steps:
-      # actions/checkout MUST come before auth
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          # From valora-viem-hsm-test
-          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-      - id: google-secrets
-        uses: google-github-actions/get-secretmanager-secrets@bc9c54b29fdffb8a47776820a7d26e77b379d262 # v3.0.0
-        with:
-          # valora-viem-hsm-test service account has access to these specific secrets
-          secrets: |-
-            SLACK_WEBHOOK_URL:celo-mobile-mainnet/SLACK_ONCALL_WEBHOOK_URL
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version-file: 'package.json'
@@ -108,16 +105,3 @@ jobs:
       - run: yarn release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: ravsamhq/notify-slack-action@be814b201e233b2dc673608aa46e5447c8ab13f2 # 2.5.0
-        if: always()
-        with:
-          status: ${{ job.status }}
-          notification_title: '{workflow} has {status_message}'
-          message_format: '{emoji} *{workflow}* {status_message}. <{run_url}|View Run>'
-          footer: 'Repo: <{repo_url}|{repo}>'
-          notify_when: 'failure'
-          # Tag @supporthero on failures, can change to any slack group id
-          mention_groups: 'S0277QUM4KB'
-          mention_groups_when: 'failure'
-        env:
-          SLACK_WEBHOOK_URL: ${{ steps.google-secrets.outputs.SLACK_WEBHOOK_URL }}
