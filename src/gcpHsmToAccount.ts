@@ -33,7 +33,7 @@ async function getPublicKey(
     throw new Error('PublicKey pem is not defined')
   }
   if (pk.name !== hsmKeyVersion) {
-    throw new Error('GetPublicKey: request corrupted in-transit')
+    throw new Error('GetPublicKey: response name mismatch')
   }
   if (crc32c(Buffer.from(pk.pem)) !== Number(pk.pemCrc32c?.value)) {
     throw new Error('GetPublicKey: response corrupted in-transit')
