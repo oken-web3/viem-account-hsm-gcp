@@ -9,8 +9,11 @@ import {
 import { TYPED_DATA } from '../test/values'
 import { gcpHsmToAccount } from './gcpHsmToAccount'
 
-const GCP_HSM_KEY_NAME =
-  'projects/valora-viem-hsm-test/locations/global/keyRings/test/cryptoKeys/hsm/cryptoKeyVersions/1'
+const GCP_HSM_KEY_NAME = process.env.GCP_HSM_KEY_VERSION
+
+if (!GCP_HSM_KEY_NAME) {
+  throw new Error('GCP_HSM_KEY_VERSION must be set to run end-to-end tests')
+}
 
 describe('gcpHsmToAccount', () => {
   it('returns a valid viem account when given a known hsm key', async () => {
@@ -18,9 +21,8 @@ describe('gcpHsmToAccount', () => {
       hsmKeyVersion: GCP_HSM_KEY_NAME,
     })
     expect(gcpHsmAccount).toEqual({
-      address: '0x6AD01Ac6841b67f27DC1A039FefBF5804003d6a4',
-      publicKey:
-        '0x04b7ff0468ad921a192f9ad1eb8d979aacd1e27c86dccc5172fc48e587fb46e4520a52ddcfb10e8f48841fa758930a1e1f15dd12c51e1868f38ab1352d2ee9b132',
+      address: expect.stringMatching(/^0x[0-9a-fA-F]{40}$/),
+      publicKey: expect.stringMatching(/^0x04[0-9a-fA-F]{128}$/),
       sign: expect.any(Function),
       signMessage: expect.any(Function),
       signTransaction: expect.any(Function),

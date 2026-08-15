@@ -1,10 +1,21 @@
 {
-  "name": "@valora/viem-account-hsm-gcp",
+  "name": "@oken/viem-account-hsm-gcp",
   "version": "0.0.0-semantic-release",
+  "description": "Use a Google Cloud KMS key as a viem account signer.",
   "main": "dist/gcpHsmToAccount.js",
   "typings": "dist/gcpHsmToAccount.d.ts",
-  "repository": "https://github.com/valora-xyz/viem-account-hsm-gcp",
-  "author": "Valora Inc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oken-web3/viem-account-hsm-gcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oken-web3/viem-account-hsm-gcp/issues"
+  },
+  "homepage": "https://github.com/oken-web3/viem-account-hsm-gcp#readme",
+  "author": "Oken",
+  "contributors": [
+    "Valora Inc"
+  ],
   "license": "Apache-2.0",
   "engines": {
     "node": ">=20"
@@ -33,7 +44,7 @@
     "format:check": "prettier --check .",
     "test": "jest --selectProjects unit",
     "test:watch": "yarn test --watch",
-    "test:ci": "yarn jest --ci --coverage",
+    "test:ci": "yarn jest --ci --coverage --selectProjects unit",
     "test:e2e": "jest --selectProjects e2e",
     "supercheck": "yarn format && yarn lint:fix && yarn typecheck && yarn knip && yarn test",
     "send": "ts-node ./scripts/send.ts",
@@ -53,8 +64,7 @@
     "@types/jest": "29.5.14",
     "@types/shelljs": "0.8.17",
     "@typescript-eslint/eslint-plugin": "7.18.0",
-    "@valora/eslint-config-typescript": "1.1.40",
-    "@valora/prettier-config": "0.0.1",
+    "@typescript-eslint/parser": "7.18.0",
     "conventional-changelog-conventionalcommits": "9.1.0",
     "eslint": "8.57.1",
     "eslint-plugin-import": "2.32.0",
@@ -72,7 +82,6 @@
     "typescript": "5.8.3",
     "viem": "2.37.9"
   },
-  "prettier": "@valora/prettier-config",
   "release": {
     "branches": [
       "main"
