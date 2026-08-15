@@ -80,11 +80,11 @@ async function signWithKms(
     digestCrc32c: { value: crc32c(digest) },
   })
 
-  if (
-    signResponse.name !== hsmKeyVersion ||
-    !signResponse.verifiedDigestCrc32c
-  ) {
-    throw new Error('AsymmetricSign: request corrupted in-transit')
+  if (signResponse.name !== hsmKeyVersion) {
+    throw new Error('AsymmetricSign: response name does not match request')
+  }
+  if (!signResponse.verifiedDigestCrc32c) {
+    throw new Error('AsymmetricSign: request digest CRC32C was not verified')
   }
   if (!signResponse.signature) {
     throw new Error('AsymmetricSign: signature is not defined')
